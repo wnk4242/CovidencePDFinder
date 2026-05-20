@@ -6,6 +6,7 @@ This tool is especially useful for systematic reviews, scoping reviews, meta-ana
 <p align="center">
   <img src="pics/1.png" style="margin-left: 20px;" />
 </p>
+
 ## Purpose
 
 Finding full-text PDFs can be repetitive and time-consuming, especially when working through many studies in Covidence. Covidence PDF Finder adds search tools directly to Covidence study cards, allowing users to quickly search for PDFs and related article pages without manually copying and pasting titles or DOIs into different websites.
