@@ -1,0 +1,181 @@
+.covi-pdf-finder-box {
+            margin-top: 10px;
+            margin-bottom: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            font-family: Arial, sans-serif;
+            position: relative;
+        }
+
+        .covi-pdf-finder-btn {
+            border: 1px solid #193b70;
+            background: #193b70;
+            color: white;
+            border-radius: 4px;
+            padding: 6px 10px;
+            font-size: 13px;
+            cursor: pointer;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .covi-pdf-finder-btn:hover {
+            background: #10294f;
+        }
+
+        .covi-pdf-finder-btn:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        .covi-pdf-finder-btn.secondary {
+            background: white;
+            color: #193b70;
+        }
+
+        .covi-pdf-finder-btn.secondary:hover {
+            background: #eef4ff;
+        }
+
+        .covi-pdf-finder-status {
+            font-size: 13px;
+            color: #334155;
+            max-width: 760px;
+            line-height: 1.35;
+        }
+
+        .covi-pdf-finder-status.good {
+            color: #166534;
+            font-weight: 600;
+        }
+
+        .covi-pdf-finder-status.bad {
+            color: #991b1b;
+            font-weight: 600;
+        }
+
+        .covi-pdf-finder-status.warn {
+            color: #92400e;
+            font-weight: 600;
+        }
+
+        .covi-pdf-finder-search-wrap {
+            position: relative;
+            display: inline-block;
+        }
+
+        .covi-pdf-finder-menu {
+            position: absolute;
+            top: 34px;
+            left: 0;
+            z-index: 999999;
+            min-width: 190px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+            padding: 6px;
+            display: none;
+        }
+
+        .covi-pdf-finder-menu.open {
+            display: block;
+        }
+
+        .covi-pdf-finder-menu button {
+            display: block;
+            width: 100%;
+            text-align: left;
+            background: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 9px;
+            font-size: 13px;
+            color: #0f172a;
+            cursor: pointer;
+            font-family: Arial, sans-serif;
+        }
+
+        .covi-pdf-finder-menu button:hover {
+            background: #eef4ff;
+            color: #193b70;
+        }
+
+        #covi-pdf-finder-scholar-helper {
+            position: fixed;
+            right: 18px;
+            bottom: 18px;
+            z-index: 999999;
+            width: 370px;
+            max-height: 70vh;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            box-shadow: 0 6px 20px rgba(0,0,0,.18);
+            padding: 12px;
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+            color: #0f172a;
+        }
+
+        #covi-pdf-finder-scholar-helper-title {
+            font-weight: 700;
+            margin-bottom: 8px;
+            cursor: move;
+            user-select: none;
+        }
+
+        .covi-pdf-finder-scholar-info {
+            margin-bottom: 8px;
+            color: #475569;
+            line-height: 1.35;
+        }
+
+        .covi-pdf-finder-scholar-filename {
+            margin-bottom: 8px;
+            font-size: 12px;
+            color: #334155;
+            word-break: break-word;
+        }
+
+        .covi-pdf-finder-scholar-row {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 8px;
+        }
+
+        .covi-pdf-finder-scholar-small-btn {
+            border: 1px solid #193b70;
+            background: white;
+            color: #193b70;
+            border-radius: 4px;
+            padding: 5px 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-family: Arial, sans-serif;
+        }
+
+        .covi-pdf-finder-scholar-small-btn.primary {
+            background: #193b70;
+            color: white;
+        }
+
+        .covi-pdf-finder-scholar-small-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .covi-pdf-finder-scholar-link-label {
+            font-size: 12px;
+            color: #475569;
+            word-break: break-word;
+            width: 100%;
+            margin-top: 2px;
+        }
