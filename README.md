@@ -3,7 +3,9 @@
 Covidence PDF Finder is available as both a Chrome Extension and a Tampermonkey userscript. The two versions are designed to do the same thing: help users find PDF files for studies during the full-text review stage in Covidence.
 
 This tool is especially useful for systematic reviews, scoping reviews, meta-analyses, and other evidence synthesis projects where reviewers need to locate and upload full-text PDFs for many papers.
-
+<p align="center">
+  <img src="pics/1.png" style="margin-left: 20px;" />
+</p>
 ## Purpose
 
 Finding full-text PDFs can be repetitive and time-consuming, especially when working through many studies in Covidence. Covidence PDF Finder adds search tools directly to Covidence study cards, allowing users to quickly search for PDFs and related article pages without manually copying and pasting titles or DOIs into different websites.
