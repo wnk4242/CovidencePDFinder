@@ -7,7 +7,7 @@ It is available as both a Chrome Extension and a Tampermonkey userscript.
 ## Main Features
 
 - Automatically searches direct open-access PDF sources first, including:
-  - Unpaywall
+  - Unpaywall (a service that helps locate legal open-access versions of scholarly articles)
   - Europe PMC / PubMed Central
   - DOI landing pages
 - If no open-access PDF is found, allows users to manually search additional sources, including Google Search, Google Scholar, OpenAlex, and ResearchGate.
