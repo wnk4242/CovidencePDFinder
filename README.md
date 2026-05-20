@@ -4,19 +4,12 @@ This is a Chrome Extension allowing users to find PDF files for papers in the fu
 
 ## Install
 
-1. Unzip this folder.
-2. Go to `chrome://extensions/`.
-3. Turn on Developer mode.
-4. Click Load unpacked.
-5. Select this folder.
+1. Click the green  `<> Code` button, and click `Download ZIP`.
+2. Unzip the downloaded ZIP file, and only keep the `CovidencePDFinder` folder.
+3. Open the `content.js` file, and replace  `YOUR_EMAIL@example.com` with your real email address.
+4. Go to `chrome://extensions/`.
+5. Turn on `Developer mode`.
+6. Click `Load unpacked`.
+7. Select the `CovidencePDFinder` folder.
 
-## Unpaywall email
-
-Open `content.js` and replace:
-
-```js
-const UNPAYWALL_EMAIL = "YOUR_EMAIL@example.com";
-```
-
-with your real email address.
 
