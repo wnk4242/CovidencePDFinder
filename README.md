@@ -12,7 +12,7 @@ It is available as both a Chrome Extension and a Tampermonkey userscript.
   - DOI landing pages
 - If no open-access PDF is found, allows users to manually search additional sources, including Google Search, Google Scholar, OpenAlex, and ResearchGate.
 - Includes a custom database search option that helps researchers search for PDFs using institutional library resources, such as EBSCO.
-- Helps fill search boxes automatically on supported database pages.
+- Fills search boxes with DOI or title automatically on supported database pages.
 
 <p align="center">
   <img src="pics/1.png" style="margin-left: 20px;" />
