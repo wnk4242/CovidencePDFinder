@@ -22,6 +22,14 @@ It is available as both a Chrome Extension and a Tampermonkey userscript.
 
 ---
 
+# Chrome Extension vs. Userscript
+
+Use the Chrome Extension if you want a simple installation folder that can be loaded into Chrome.
+
+Use the Tampermonkey userscript if you want to easily edit the code, customize search options, or test new features.
+
+---
+
 # Chrome Extension Installation
 
 1. Click the green `<> Code` button on this GitHub page.
@@ -86,10 +94,3 @@ The userscript version requires the Tampermonkey browser extension.
 4. Click **Search Options** to use other manual search tools.
 5. Use **Custom Search** if you want to search a specific database by DOI or title.
 
----
-
-# Chrome Extension vs. Userscript
-
-Use the Chrome Extension if you want a simple installation folder that can be loaded into Chrome.
-
-Use the Tampermonkey userscript if you want to easily edit the code, customize search options, or test new features.
