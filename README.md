@@ -24,9 +24,9 @@ It is available as both a Chrome Extension and a Tampermonkey userscript.
 
 # Chrome Extension vs. Userscript
 
-Use the Chrome Extension if you want a simple installation folder that can be loaded into Chrome.
+Use the Chrome Extension if you want a simple installation process.
 
-Use the Tampermonkey userscript if you want to easily edit the code, customize search options, or test new features.
+Use the Tampermonkey userscript if you want to customize search options or add new personalized features.
 
 ---
 
