@@ -4,7 +4,7 @@ Covidence PDF Finder is designed to help researchers find PDF files for studies 
 
 It is available as both a Chrome Extension and a Tampermonkey userscript.
 
-<p align="center">
+<p align="left">
   <img src="pics/1.png" style="margin-left: 20px;" />
 </p>
 
