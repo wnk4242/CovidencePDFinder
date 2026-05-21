@@ -4,6 +4,12 @@ Covidence PDF Finder is designed to help researchers find PDF files for studies 
 
 It is available as both a Chrome Extension and a Tampermonkey userscript.
 
+<p align="center">
+  <img src="pics/1.png" style="margin-left: 20px;" />
+</p>
+
+---
+
 ## Main Features
 
 - Automatically searches direct open-access PDF sources first, including:
@@ -13,10 +19,6 @@ It is available as both a Chrome Extension and a Tampermonkey userscript.
 - If no open-access PDF is found, allows users to manually search additional sources, including Google Search, Google Scholar, OpenAlex, and ResearchGate.
 - Includes a custom database search option that helps researchers search for PDFs using institutional library resources, such as EBSCO.
 - Fills search boxes with DOI or title automatically on supported database pages.
-
-<p align="center">
-  <img src="pics/1.png" style="margin-left: 20px;" />
-</p>
 
 ---
 
