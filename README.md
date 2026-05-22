@@ -10,13 +10,17 @@ Covidence PDF Finder is designed to help researchers find PDF files for studies 
 
 ## Main Features
 
-- Fills search boxes with DOI or title automatically on supported database pages.
+- Fills the search box with study DOI or title automatically on supported database pages.
 - Searches direct open-access PDF sources first, including:
   - Unpaywall (a service that helps locate legal open-access versions of scholarly articles)
   - Europe PMC / PubMed Central
   - DOI landing pages
 - If no open-access PDF is found, allows users to manually search additional sources, including Google Search, Google Scholar, OpenAlex, and ResearchGate.
-- Includes a custom database search option allowing researchers search for PDFs using institutional library resources, such as EBSCO.
+- Includes a custom database search option allowing researchers search for PDFs using their institutional library resources (EBSCO, Ovid, PsycInfo, JSTOR, Web of Science, ScienceDirect, etc)
+
+<p align="left">
+  <img src="pics/2.png" style="margin-left: 20px;" />
+</p>
 
 ---
 
@@ -41,6 +45,6 @@ Covidence PDF Finder is designed to help researchers find PDF files for studies 
 2. Go to a study that needs a full-text PDF.
 3. Use the added **Find + Download PDF** button to search for an open-access PDF.
 4. Use **Search Options** if you want to manually search Google Scholar, ResearchGate, OpenAlex, DOI pages, or a custom database.
-5. If using **Custom Search**, enter the database website and choose whether to search by DOI or title.
+5. If using **Custom Search**, enter the database website and choose whether to search by DOI or title. For example, if you access JSTOR through your institutional library, you can paste your own institution-specific JSTOR link, such as `https://www-jstor-org.srv-proxy2.library.tamu.edu/`.
 
 
