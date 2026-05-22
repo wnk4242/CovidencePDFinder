@@ -15,14 +15,62 @@
      * This extension runs on:
      * 1. Covidence pages
      * 2. Google Scholar pages
-     * 3. Custom database pages only when opened with #coviCustomSearch=
+     * 3. Custom database pages opened from the Custom Search dialog.
+     *
+     * Some database sites, including JSTOR, may remove or ignore URL
+     * fragments such as #coviCustomSearch= after loading. For that reason,
+     * the extension also stores one pending custom search in chrome.storage
+     * and lets the target page recover it even if the hash disappears.
      ************************************************************/
     const IS_COVIDENCE = location.hostname.includes("app.covidence.org");
     const IS_SCHOLAR = location.hostname.includes("scholar.google.com");
     const IS_CUSTOM_DATABASE_TARGET = window.location.hash.includes("coviCustomSearch=");
+    const PENDING_CUSTOM_SEARCH_KEY = "covi_pdf_finder_pending_custom_search";
 
-    if (!IS_COVIDENCE && !IS_SCHOLAR && !IS_CUSTOM_DATABASE_TARGET) {
-        return;
+    function normalizeHostForMatch(hostname) {
+        return String(hostname || "").toLowerCase().replace(/^www\./, "");
+    }
+
+    function chromeStorageGet(key) {
+        return new Promise(resolve => {
+            try {
+                if (!chrome || !chrome.storage || !chrome.storage.local) {
+                    resolve({});
+                    return;
+                }
+                chrome.storage.local.get(key, result => resolve(result || {}));
+            } catch (e) {
+                resolve({});
+            }
+        });
+    }
+
+    function chromeStorageSet(obj) {
+        return new Promise(resolve => {
+            try {
+                if (!chrome || !chrome.storage || !chrome.storage.local) {
+                    resolve();
+                    return;
+                }
+                chrome.storage.local.set(obj, resolve);
+            } catch (e) {
+                resolve();
+            }
+        });
+    }
+
+    function chromeStorageRemove(key) {
+        return new Promise(resolve => {
+            try {
+                if (!chrome || !chrome.storage || !chrome.storage.local) {
+                    resolve();
+                    return;
+                }
+                chrome.storage.local.remove(key, resolve);
+            } catch (e) {
+                resolve();
+            }
+        });
     }
 
 /************************************************************
@@ -494,6 +542,42 @@
         });
     }
 
+    function isJstorHost(hostname) {
+        const host = normalizeHostForMatch(hostname);
+
+        return (
+            host === "jstor.org" ||
+            host.endsWith(".jstor.org") ||
+            host.includes("jstor-org") ||
+            host.includes("jstor.org")
+        );
+    }
+
+    function buildCustomDatabaseTargetUrl(databaseHomepage, searchText, searchType) {
+        let homepageUrl;
+
+        try {
+            homepageUrl = new URL(databaseHomepage);
+        } catch (e) {
+            return "";
+        }
+
+        // JSTOR's normal search URL is /action/doBasicSearch?Query=...&so=rel.
+        // Use the same origin the user entered, so institutional proxy URLs still work, e.g.:
+        // https://www-jstor-org.libproxy.school.edu/action/doBasicSearch?Query=...&so=rel
+        if (isJstorHost(homepageUrl.hostname)) {
+            const jstorUrl = new URL(homepageUrl.origin + "/action/doBasicSearch");
+            jstorUrl.searchParams.set("Query", searchText);
+            jstorUrl.searchParams.set("so", "rel");
+            return jstorUrl.href;
+        }
+
+        const separator = databaseHomepage.includes("#") ? "&" : "#";
+        return databaseHomepage + separator +
+            "coviCustomSearch=" + encodeURIComponent(searchText) +
+            "&coviCustomSearchType=" + encodeURIComponent(searchType);
+    }
+
     async function openCustomSearch(meta, statusEl) {
         const HOMEPAGE_STORAGE_KEY = "covi_pdf_finder_custom_database_homepage";
         const SEARCH_TYPE_STORAGE_KEY = "covi_pdf_finder_custom_search_type";
@@ -523,63 +607,262 @@
 
         localStorage.setItem(HOMEPAGE_STORAGE_KEY, databaseHomepage);
         localStorage.setItem(SEARCH_TYPE_STORAGE_KEY, searchType);
-        const separator = databaseHomepage.includes("#") ? "&" : "#";
-        const targetUrl = databaseHomepage + separator + "coviCustomSearch=" + encodeURIComponent(searchText) + "&coviCustomSearchType=" + encodeURIComponent(searchType);
+
+        const isJstorTarget = (() => {
+            try {
+                return isJstorHost(new URL(databaseHomepage).hostname);
+            } catch (e) {
+                return false;
+            }
+        })();
+
+        const targetUrl = buildCustomDatabaseTargetUrl(databaseHomepage, searchText, searchType);
+
+        // For JSTOR, the extension opens JSTOR's search-results URL directly.
+        // Do NOT save a pending autofill task; otherwise JSTOR's search bar can
+        // receive the text again and open its autocomplete dropdown.
+        if (isJstorTarget) {
+            await chromeStorageRemove(PENDING_CUSTOM_SEARCH_KEY);
+        } else {
+            let targetHost = "";
+            try {
+                targetHost = normalizeHostForMatch(new URL(databaseHomepage).hostname);
+            } catch (e) {}
+
+            await chromeStorageSet({
+                [PENDING_CUSTOM_SEARCH_KEY]: {
+                    host: targetHost,
+                    searchText,
+                    searchType,
+                    createdAt: Date.now()
+                }
+            });
+        }
 
         window.open(targetUrl, "_blank", "noopener,noreferrer");
-        setStatus(statusEl, `Opened custom database and sent ${searchType === "doi" ? "DOI" : "title"} to the search bar.`, "good");
+
+        setStatus(
+            statusEl,
+            isJstorTarget
+                ? `Opened JSTOR search directly using the selected ${searchType === "doi" ? "DOI" : "title"}.`
+                : `Opened custom database and sent ${searchType === "doi" ? "DOI" : "title"} to the search bar.`,
+            "good"
+        );
     }
 
-    function fillCustomDatabaseSearchBox() {
+    async function getPendingCustomSearchFromStorage() {
+        const result = await chromeStorageGet(PENDING_CUSTOM_SEARCH_KEY);
+        const pending = result ? result[PENDING_CUSTOM_SEARCH_KEY] : null;
+        if (!pending || !pending.searchText) return null;
+
+        const ageMs = Date.now() - Number(pending.createdAt || 0);
+        if (ageMs > 2 * 60 * 1000) {
+            await chromeStorageRemove(PENDING_CUSTOM_SEARCH_KEY);
+            return null;
+        }
+
+        const currentHost = normalizeHostForMatch(location.hostname);
+        const targetHost = normalizeHostForMatch(pending.host);
+
+        if (!targetHost || currentHost === targetHost || currentHost.endsWith("." + targetHost) || targetHost.endsWith("." + currentHost)) {
+            return pending;
+        }
+
+        return null;
+    }
+
+    async function fillCustomDatabaseSearchBox() {
         const hash = window.location.hash || "";
-        if (!hash.includes("coviCustomSearch=")) return;
 
-        const match = hash.match(/coviCustomSearch=([^&]+)/);
-        if (!match || !match[1]) return;
-        const searchText = decodeURIComponent(match[1]);
+        // JSTOR is handled by direct search URLs such as
+        // /action/doBasicSearch?Query=...&so=rel, so the extension should not
+        // autofill JSTOR's search bar. Autofill triggers JSTOR's suggestions menu.
+        if (isJstorHost(location.hostname) && !hash.includes("coviCustomSearch=")) {
+            await chromeStorageRemove(PENDING_CUSTOM_SEARCH_KEY);
+            return;
+        }
 
-        const typeMatch = hash.match(/coviCustomSearchType=([^&]+)/);
-        const searchType = typeMatch && typeMatch[1] ? decodeURIComponent(typeMatch[1]) : "selected text";
+        let searchText = "";
+        let searchType = "selected text";
+
+        if (hash.includes("coviCustomSearch=")) {
+            const match = hash.match(/coviCustomSearch=([^&]+)/);
+            if (match && match[1]) {
+                searchText = decodeURIComponent(match[1]);
+            }
+
+            const typeMatch = hash.match(/coviCustomSearchType=([^&]+)/);
+            searchType = typeMatch && typeMatch[1] ? decodeURIComponent(typeMatch[1]) : "selected text";
+        }
+
+        if (!searchText) {
+            const pending = await getPendingCustomSearchFromStorage();
+            if (!pending) return;
+            searchText = pending.searchText;
+            searchType = pending.searchType || "selected text";
+        }
+
+        if (!searchText) return;
+
+        function getDeepElements(selector) {
+            const results = [];
+            const seen = new Set();
+
+            function collect(root) {
+                if (!root || seen.has(root)) return;
+                seen.add(root);
+
+                try {
+                    root.querySelectorAll(selector).forEach(el => results.push(el));
+                } catch (e) {}
+
+                try {
+                    root.querySelectorAll("*").forEach(el => {
+                        if (el.shadowRoot) collect(el.shadowRoot);
+                    });
+                } catch (e) {}
+            }
+
+            collect(document);
+            return results;
+        }
+
+        function isUsableVisibleElement(el) {
+            if (!el) return false;
+            if (el.disabled) return false;
+            if (el.getAttribute && el.getAttribute("aria-hidden") === "true") return false;
+
+            const style = window.getComputedStyle(el);
+            if (style.display === "none" || style.visibility === "hidden" || Number(style.opacity) === 0) return false;
+
+            const rect = el.getBoundingClientRect();
+            if (rect.width < 20 || rect.height < 10) return false;
+
+            return true;
+        }
+
+        function scoreSearchInput(input) {
+            const attrs = [
+                input.type,
+                input.name,
+                input.id,
+                input.placeholder,
+                input.getAttribute("aria-label"),
+                input.getAttribute("title"),
+                input.getAttribute("role"),
+                input.className
+            ].join(" ").toLowerCase();
+
+            let score = 0;
+            if ((input.type || "").toLowerCase() === "search") score += 80;
+            if (/search|query|keyword|keywords|jstor/.test(attrs)) score += 60;
+            if (/email|password|login|username|sign in|sign-in/.test(attrs)) score -= 200;
+            if (input.tagName.toLowerCase() === "textarea") score += 10;
+            if (input.isContentEditable) score += 5;
+
+            const rect = input.getBoundingClientRect();
+            score += Math.min(rect.width, 600) / 20;
+
+            return score;
+        }
+
+        function tryOpenCollapsedSearch() {
+            const candidates = getDeepElements(
+                'button[aria-label*="search" i], button[title*="search" i], button[class*="search" i], a[aria-label*="search" i], a[title*="search" i], a[class*="search" i]'
+            ).filter(isUsableVisibleElement);
+
+            const openButton = candidates.find(btn => {
+                const text = (btn.innerText || btn.textContent || btn.getAttribute("aria-label") || btn.getAttribute("title") || "").trim().toLowerCase();
+                return text === "search" || text === "open search" || text === "show search" || text.includes("search");
+            });
+
+            if (openButton) {
+                try {
+                    openButton.click();
+                    return true;
+                } catch (e) {}
+            }
+
+            return false;
+        }
 
         function findSearchInput() {
             const selectors = [
+                // JSTOR and many library databases use Query with a capital Q.
+                'input[name="Query"]',
+                'input[id="Query"]',
+                'input[name="searchQuery"]',
+                'input[id="searchQuery"]',
+                'input[name="queryText"]',
                 'input[type="search"]',
+                'input[role="searchbox"]',
+                '[contenteditable="true"][role="searchbox"]',
                 'input[name="q"]',
                 'input[name="query"]',
                 'input[name="search"]',
                 'input[id*="search" i]',
                 'input[name*="search" i]',
                 'input[placeholder*="search" i]',
+                'input[aria-label*="search" i]',
                 'textarea[placeholder*="search" i]',
+                'textarea[aria-label*="search" i]',
                 'textarea'
             ];
 
+            const candidates = [];
+
             for (const selector of selectors) {
-                const input = document.querySelector(selector);
-                if (input && !input.disabled && input.offsetParent !== null) return input;
+                candidates.push(...getDeepElements(selector));
             }
 
-            const allInputs = Array.from(document.querySelectorAll("input")).filter(input => {
+            candidates.push(...getDeepElements("input").filter(input => {
                 const type = (input.type || "").toLowerCase();
-                return !input.disabled && input.offsetParent !== null && ["text", "search", ""].includes(type);
-            });
+                return ["text", "search", ""].includes(type);
+            }));
 
-            return allInputs[0] || null;
+            const uniqueCandidates = Array.from(new Set(candidates))
+                .filter(isUsableVisibleElement)
+                .filter(input => {
+                    const type = (input.type || "").toLowerCase();
+                    return !["hidden", "password", "email", "checkbox", "radio", "submit", "button"].includes(type);
+                })
+                .sort((a, b) => scoreSearchInput(b) - scoreSearchInput(a));
+
+            return uniqueCandidates[0] || null;
         }
 
         function fillReactCompatibleInput(input, value) {
+            const tagName = input.tagName.toLowerCase();
+
+            if (input.isContentEditable) {
+                input.textContent = value;
+                input.dispatchEvent(new InputEvent("input", {
+                    bubbles: true,
+                    cancelable: true,
+                    inputType: "insertText",
+                    data: value
+                }));
+                input.dispatchEvent(new Event("change", { bubbles: true }));
+                return;
+            }
+
             const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
             const nativeTextAreaValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value")?.set;
 
-            if (input.tagName.toLowerCase() === "textarea" && nativeTextAreaValueSetter) {
+            if (tagName === "textarea" && nativeTextAreaValueSetter) {
                 nativeTextAreaValueSetter.call(input, value);
-            } else if (nativeInputValueSetter) {
+            } else if (tagName === "input" && nativeInputValueSetter) {
                 nativeInputValueSetter.call(input, value);
             } else {
                 input.value = value;
             }
 
-            input.dispatchEvent(new Event("input", { bubbles: true }));
+            input.dispatchEvent(new InputEvent("input", {
+                bubbles: true,
+                cancelable: true,
+                inputType: "insertText",
+                data: value
+            }));
             input.dispatchEvent(new Event("change", { bubbles: true }));
         }
 
@@ -625,9 +908,13 @@
         }
 
         function findSearchButton(input) {
-            const form = input.closest("form");
+            const root = input.getRootNode ? input.getRootNode() : document;
+            const form = input.closest ? input.closest("form") : null;
+
             if (form) {
-                const formButton = form.querySelector('button[type="submit"], input[type="submit"], button[aria-label*="search" i], button[title*="search" i]');
+                const formButton = form.querySelector(
+                    'button[type="submit"], input[type="submit"], button[aria-label*="search" i], button[title*="search" i], button[data-testid*="search" i]'
+                );
                 if (formButton && !formButton.disabled) return formButton;
             }
 
@@ -638,18 +925,34 @@
                 'button[title*="search" i]',
                 'button[id*="search" i]',
                 'button[class*="search" i]',
+                'button[data-testid*="search" i]',
                 'input[value*="Search" i]'
             ];
 
+            const buttons = [];
             for (const selector of buttonSelectors) {
-                const btn = document.querySelector(selector);
-                if (btn && !btn.disabled && btn.offsetParent !== null) return btn;
+                try {
+                    if (root && root.querySelectorAll) buttons.push(...root.querySelectorAll(selector));
+                } catch (e) {}
+                buttons.push(...getDeepElements(selector));
             }
 
-            return Array.from(document.querySelectorAll("button, input[type='button'], input[type='submit']")).find(btn => {
-                const text = (btn.innerText || btn.value || "").trim().toLowerCase();
-                return !btn.disabled && btn.offsetParent !== null && (text === "search" || text.includes("search"));
-            }) || null;
+            buttons.push(...getDeepElements("button, input[type='button'], input[type='submit']").filter(btn => {
+                const text = (btn.innerText || btn.textContent || btn.value || btn.getAttribute("aria-label") || btn.getAttribute("title") || "").trim().toLowerCase();
+                return text === "search" || text.includes("search");
+            }));
+
+            const inputRect = input.getBoundingClientRect();
+
+            return Array.from(new Set(buttons))
+                .filter(isUsableVisibleElement)
+                .sort((a, b) => {
+                    const ar = a.getBoundingClientRect();
+                    const br = b.getBoundingClientRect();
+                    const ad = Math.abs(ar.left - inputRect.right) + Math.abs(ar.top - inputRect.top);
+                    const bd = Math.abs(br.left - inputRect.right) + Math.abs(br.top - inputRect.top);
+                    return ad - bd;
+                })[0] || null;
         }
 
         function submitSearch(input) {
@@ -674,6 +977,7 @@
         function fillInput(input) {
             input.focus();
             fillReactCompatibleInput(input, searchText);
+            chromeStorageRemove(PENDING_CUSTOM_SEARCH_KEY);
             showCustomSearchPanel(`The ${searchType} was inserted into the search box. The script will try to run the search automatically:`, searchText);
             setTimeout(() => submitSearch(input), 800);
         }
@@ -681,6 +985,11 @@
         let attempts = 0;
         const timer = setInterval(() => {
             attempts += 1;
+
+            if (attempts === 2 || attempts === 6 || attempts === 12) {
+                tryOpenCollapsedSearch();
+            }
+
             const input = findSearchInput();
             if (input) {
                 clearInterval(timer);
@@ -688,12 +997,8 @@
                 return;
             }
 
-            if (attempts >= 24) {
+            if (attempts >= 20) {
                 clearInterval(timer);
-                navigator.clipboard.writeText(searchText).catch(() => {});
-                alert("Covidence Custom Search could not find a search box on this page.\n\n" +
-                    "The selected search text has been copied to your clipboard. Paste it into the database search box manually:\n\n" +
-                    searchText);
             }
         }, 500);
     }
@@ -1564,12 +1869,7 @@
      * Init router
      ************************************************************/
 
-    function init() {
-        if (IS_CUSTOM_DATABASE_TARGET) {
-            fillCustomDatabaseSearchBox();
-            return;
-        }
-
+    async function init() {
         if (IS_SCHOLAR) {
             waitForScholarReady(initGoogleScholarPdfHelper);
             return;
@@ -1578,7 +1878,13 @@
         if (IS_COVIDENCE) {
             scanAndAttachControls();
             startLightPageWatcher();
+            return;
         }
+
+        // On all other pages, do almost nothing unless this page was opened
+        // by the Custom Search dialog. This fixes sites such as JSTOR that
+        // may load at https://www.jstor.org/ without preserving the hash.
+        await fillCustomDatabaseSearchBox();
     }
 
     init();
