@@ -10,13 +10,13 @@ Covidence PDF Finder is designed to help researchers find PDF files for studies 
 
 ## Main Features
 
-- Fills search boxes with DOI or title automatically on supported database pages.
+- Fills the search box with study DOI or title automatically on supported database pages.
 - Searches direct open-access PDF sources first, including:
   - Unpaywall (a service that helps locate legal open-access versions of scholarly articles)
   - Europe PMC / PubMed Central
   - DOI landing pages
 - If no open-access PDF is found, allows users to manually search additional sources, including Google Search, Google Scholar, OpenAlex, and ResearchGate.
-- Includes a custom database search option allowing researchers search for PDFs using their institutional library resources (EBSCO, Ovid, APA PsycInfo, etc)
+- Includes a custom database search option allowing researchers search for PDFs using their institutional library resources (EBSCO, Ovid, PsycInfo, JSTOR, Web of Science, ScienceDirect, etc)
 
 <p align="left">
   <img src="pics/2.png" style="margin-left: 20px;" />
