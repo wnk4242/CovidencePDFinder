@@ -978,7 +978,6 @@
             input.focus();
             fillReactCompatibleInput(input, searchText);
             chromeStorageRemove(PENDING_CUSTOM_SEARCH_KEY);
-            showCustomSearchPanel(`The ${searchType} was inserted into the search box. The script will try to run the search automatically:`, searchText);
             setTimeout(() => submitSearch(input), 800);
         }
 
