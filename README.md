@@ -18,10 +18,6 @@ Covidence PDF Finder is designed to help researchers find PDF files for studies 
 - If no open-access PDF is found, allows users to manually search additional sources, including Google Search, Google Scholar, OpenAlex, and ResearchGate.
 - Includes a custom database search option allowing researchers search for PDFs using their institutional library resources (EBSCO, Ovid, PsycInfo, JSTOR, Web of Science, ScienceDirect, etc)
 
-<p align="left">
-  <img src="pics/2.png" style="margin-left: 20px;" />
-</p>
-
 ---
 
 # Chrome Extension Installation
