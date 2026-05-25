@@ -978,6 +978,7 @@
             input.focus();
             fillReactCompatibleInput(input, searchText);
             chromeStorageRemove(PENDING_CUSTOM_SEARCH_KEY);
+            showCustomSearchPanel(`The ${searchType} was inserted into the search box. The script will try to run the search automatically:`, searchText);
             setTimeout(() => submitSearch(input), 800);
         }
 
@@ -1508,6 +1509,23 @@
                 }
                 break;
 
+            case "semanticscholar":
+                if (cleanTitle) {
+                    url =
+                        "https://www.semanticscholar.org/search?q=" +
+                        encodeURIComponent(cleanTitle) +
+                        "&sort=relevance";
+                } else if (meta.doi) {
+                    url =
+                        "https://www.semanticscholar.org/search?q=" +
+                        encodeURIComponent(meta.doi) +
+                        "&sort=relevance";
+                } else {
+                    setStatus(statusEl, "No title or DOI detected for this study.", "bad");
+                    return;
+                }
+                break;
+
             case "doi":
                 if (meta.doi) {
                     url = "https://doi.org/" + encodeURIComponent(meta.doi);
@@ -1536,6 +1554,25 @@
     }
 
     function makeSearchOptionsControl(card, statusEl) {
+        const HIDDEN_OPTIONS_KEY = "covi_pdf_finder_hidden_search_options";
+        const OPTIONS_CHANGED_EVENT = "coviPdfFinderSearchOptionsChanged";
+
+        function getHiddenOptions() {
+            try {
+                return JSON.parse(localStorage.getItem(HIDDEN_OPTIONS_KEY) || "[]");
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveHiddenOptions(hiddenOptions) {
+            localStorage.setItem(HIDDEN_OPTIONS_KEY, JSON.stringify(hiddenOptions));
+        }
+
+        function notifyAllMenusToUpdate() {
+            document.dispatchEvent(new CustomEvent(OPTIONS_CHANGED_EVENT));
+        }
+
         const wrap = document.createElement("span");
         wrap.className = `${SCRIPT_TAG}-search-wrap`;
 
@@ -1554,30 +1591,148 @@
         const menuEl = document.createElement("div");
         menuEl.className = `${SCRIPT_TAG}-menu`;
 
-        const options = [
+        menuEl.style.cssText += `
+            min-width: 145px;
+            width: 155px;
+            position: absolute;
+            padding: 5px;
+        `;
+
+        const allOptions = [
             { label: "Google Search", site: "google" },
             { label: "Google Scholar", site: "scholar" },
             { label: "ResearchGate", site: "researchgate" },
             { label: "OpenAlex", site: "openalex" },
+            { label: "Semantic Scholar", site: "semanticscholar" },
             { label: "DOI Page", site: "doi" },
             { label: "Custom Search", site: "customsearch" }
         ];
 
-        options.forEach(option => {
-            const item = document.createElement("button");
-            item.type = "button";
-            item.textContent = option.label;
+        function renderMenuItems() {
+            menuEl.innerHTML = "";
 
-            item.addEventListener("click", event => {
+            const hiddenOptions = getHiddenOptions();
+
+            const resetBtn = document.createElement("button");
+            resetBtn.type = "button";
+            resetBtn.textContent = "↻";
+            resetBtn.title = "Reset hidden search options";
+            resetBtn.style.cssText = `
+                position: absolute;
+                top: 4px;
+                right: 4px;
+                width: 18px;
+                height: 18px;
+                min-width: 18px;
+                padding: 0;
+                margin: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 11px;
+                font-weight: 700;
+                line-height: 1;
+                color: #111827;
+                background: #ffffff;
+                border: 1px solid #cbd5e1;
+                border-radius: 5px;
+                cursor: pointer;
+                z-index: 5;
+            `;
+
+            resetBtn.addEventListener("click", event => {
                 event.stopPropagation();
-
-                const meta = getStudyMetadata(card);
-                openSearchSite(option.site, meta, statusEl);
-                menuEl.classList.remove("open");
+                saveHiddenOptions([]);
+                notifyAllMenusToUpdate();
             });
 
-            menuEl.appendChild(item);
-        });
+            menuEl.appendChild(resetBtn);
+
+            const visibleOptions = allOptions.filter(option => {
+                return !hiddenOptions.includes(option.site);
+            });
+
+            if (visibleOptions.length === 0) {
+                const emptyMsg = document.createElement("div");
+                emptyMsg.textContent = "All hidden. Click ↻.";
+                emptyMsg.style.cssText = `
+                    padding: 7px 24px 7px 7px;
+                    font-size: 12px;
+                    color: #64748b;
+                    font-family: Arial, sans-serif;
+                `;
+                menuEl.appendChild(emptyMsg);
+                return;
+            }
+
+            visibleOptions.forEach((option, index) => {
+                const item = document.createElement("button");
+                item.type = "button";
+                item.style.cssText = `
+                    display: flex;
+                    align-items: center;
+                    justify-content: flex-start;
+                    gap: 6px;
+                    width: 100%;
+                    text-align: left;
+                    padding: 7px ${index === 0 ? "24px" : "7px"} 7px 5px;
+                    white-space: nowrap;
+                    overflow: hidden;
+                `;
+
+                const removeSpan = document.createElement("span");
+                removeSpan.textContent = "×";
+                removeSpan.title = `Hide ${option.label}`;
+                removeSpan.style.cssText = `
+                    flex: 0 0 auto;
+                    color: #111827;
+                    font-size: 14px;
+                    font-weight: 700;
+                    line-height: 1;
+                    width: 12px;
+                    text-align: center;
+                    cursor: pointer;
+                `;
+
+                const labelSpan = document.createElement("span");
+                labelSpan.textContent = option.label;
+                labelSpan.style.cssText = `
+                    flex: 1 1 auto;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                `;
+
+                removeSpan.addEventListener("click", event => {
+                    event.stopPropagation();
+
+                    const currentHiddenOptions = getHiddenOptions();
+
+                    if (!currentHiddenOptions.includes(option.site)) {
+                        currentHiddenOptions.push(option.site);
+                        saveHiddenOptions(currentHiddenOptions);
+                    }
+
+                    notifyAllMenusToUpdate();
+                });
+
+                item.addEventListener("click", event => {
+                    event.stopPropagation();
+
+                    const meta = getStudyMetadata(card);
+                    openSearchSite(option.site, meta, statusEl);
+                    menuEl.classList.remove("open");
+                });
+
+                item.appendChild(removeSpan);
+                item.appendChild(labelSpan);
+                menuEl.appendChild(item);
+            });
+        }
+
+        document.addEventListener(OPTIONS_CHANGED_EVENT, renderMenuItems);
+
+        renderMenuItems();
 
         wrap.appendChild(btn);
         wrap.appendChild(menuEl);
