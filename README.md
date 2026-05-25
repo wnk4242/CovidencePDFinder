@@ -3,7 +3,7 @@
 Covidence PDF Finder is designed to help researchers find PDF files for studies during the full-text review stage in Covidence. This tool is especially useful for systematic reviews, scoping reviews, meta-analyses, and other evidence synthesis projects where reviewers need to locate and upload full-text PDFs for many papers.
 
 <p align="left">
-  <img src="pics/1.png" style="margin-left: 20px;" />
+  <img src="pics/3.png" style="margin-left: 20px;" />
 </p>
 
 ---
