@@ -3,11 +3,13 @@
     'use strict';
 
     /************************************************************
-     * IMPORTANT:
-     * Unpaywall asks API users to include a real email address.
-     * Replace this with your email.
+     * Unpaywall asks API users to include an email address.
+     * For public distribution, do not hard-code the developer's email.
+     * Users can optionally save their own email locally from the
+     * small + button in the Search Options menu header. If no email is saved, Unpaywall is skipped
+     * and the extension continues with other PDF sources.
      ************************************************************/
-    const UNPAYWALL_EMAIL = "YOUR_EMAIL@example.com";
+    const UNPAYWALL_EMAIL_STORAGE_KEY = "covi_pdf_finder_unpaywall_email";
 
     const SCRIPT_TAG = "covi-pdf-finder";
 
@@ -71,6 +73,155 @@
                 resolve();
             }
         });
+    }
+
+    function isValidEmailAddress(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || "").trim());
+    }
+
+    async function getSavedUnpaywallEmail() {
+        const result = await chromeStorageGet(UNPAYWALL_EMAIL_STORAGE_KEY);
+        const savedEmail = result ? String(result[UNPAYWALL_EMAIL_STORAGE_KEY] || "").trim() : "";
+
+        return isValidEmailAddress(savedEmail) ? savedEmail : "";
+    }
+
+    async function showUnpaywallEmailDialog(statusEl) {
+        const oldDialog = document.getElementById(`${SCRIPT_TAG}-unpaywall-dialog-overlay`);
+        if (oldDialog) oldDialog.remove();
+
+        const savedEmail = await getSavedUnpaywallEmail();
+
+        const overlay = document.createElement("div");
+        overlay.id = `${SCRIPT_TAG}-unpaywall-dialog-overlay`;
+        overlay.style.cssText = `
+            position: fixed;
+            inset: 0;
+            z-index: 9999999;
+            background: rgba(15, 23, 42, 0.28);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+        `;
+
+        const dialog = document.createElement("div");
+        dialog.style.cssText = `
+            width: 430px;
+            max-width: calc(100vw - 32px);
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 12px 35px rgba(15, 23, 42, 0.24);
+            border: 1px solid #cbd5e1;
+            padding: 16px;
+            color: #0f172a;
+        `;
+
+        const title = document.createElement("div");
+        title.textContent = "Optional Unpaywall Email";
+        title.style.cssText = "font-size:16px;font-weight:700;margin-bottom:8px;";
+
+        const description = document.createElement("div");
+        description.textContent = "Unpaywall requires an email address for API requests. This is optional. If you leave it blank, the extension will skip Unpaywall and continue searching other PDF sources.";
+        description.style.cssText = "font-size:13px;line-height:1.4;color:#334155;margin-bottom:12px;";
+
+        const label = document.createElement("label");
+        label.textContent = "Email address";
+        label.style.cssText = "display:block;font-size:13px;font-weight:600;margin-bottom:5px;";
+
+        const input = document.createElement("input");
+        input.type = "email";
+        input.value = savedEmail;
+        input.placeholder = "your@email.com";
+        input.style.cssText = `
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 8px 9px;
+            font-size: 13px;
+            margin-bottom: 8px;
+        `;
+
+        const note = document.createElement("div");
+        note.textContent = "Saved locally in Chrome storage and sent only to Unpaywall when searching open-access PDFs.";
+        note.style.cssText = "font-size:12px;line-height:1.35;color:#64748b;margin-bottom:12px;";
+
+        const errorBox = document.createElement("div");
+        errorBox.style.cssText = "display:none;font-size:12px;color:#991b1b;font-weight:600;margin-bottom:10px;";
+
+        const buttonRow = document.createElement("div");
+        buttonRow.style.cssText = "display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;";
+
+        const removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.textContent = "Remove saved email";
+        removeBtn.style.cssText = "border:1px solid #cbd5e1;background:white;color:#334155;border-radius:6px;padding:7px 10px;font-size:13px;cursor:pointer;margin-right:auto;";
+        removeBtn.disabled = !savedEmail;
+        removeBtn.style.opacity = savedEmail ? "1" : "0.45";
+
+        const cancelBtn = document.createElement("button");
+        cancelBtn.type = "button";
+        cancelBtn.textContent = "Cancel";
+        cancelBtn.style.cssText = "border:1px solid #cbd5e1;background:white;color:#334155;border-radius:6px;padding:7px 11px;font-size:13px;cursor:pointer;";
+
+        const saveBtn = document.createElement("button");
+        saveBtn.type = "button";
+        saveBtn.textContent = "Save";
+        saveBtn.style.cssText = "border:1px solid #193b70;background:#193b70;color:white;border-radius:6px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;";
+
+        function close() {
+            overlay.remove();
+        }
+
+        function showError(message) {
+            errorBox.textContent = message;
+            errorBox.style.display = "block";
+        }
+
+        cancelBtn.addEventListener("click", close);
+
+        removeBtn.addEventListener("click", async () => {
+            await chromeStorageRemove(UNPAYWALL_EMAIL_STORAGE_KEY);
+            setStatus(statusEl, "Removed saved Unpaywall email. Unpaywall will be skipped unless an email is saved again.", "warn");
+            close();
+        });
+
+        saveBtn.addEventListener("click", async () => {
+            const email = input.value.trim();
+
+            if (!isValidEmailAddress(email)) {
+                showError("Please enter a valid email address, or click Cancel to skip Unpaywall.");
+                return;
+            }
+
+            await chromeStorageSet({
+                [UNPAYWALL_EMAIL_STORAGE_KEY]: email
+            });
+
+            setStatus(statusEl, "Saved Unpaywall email locally. Future PDF searches will include Unpaywall.", "good");
+            close();
+        });
+
+        input.addEventListener("keydown", event => {
+            if (event.key === "Enter") saveBtn.click();
+            if (event.key === "Escape") close();
+        });
+
+        buttonRow.appendChild(removeBtn);
+        buttonRow.appendChild(cancelBtn);
+        buttonRow.appendChild(saveBtn);
+        dialog.appendChild(title);
+        dialog.appendChild(description);
+        dialog.appendChild(label);
+        dialog.appendChild(input);
+        dialog.appendChild(note);
+        dialog.appendChild(errorBox);
+        dialog.appendChild(buttonRow);
+        overlay.appendChild(dialog);
+        document.body.appendChild(overlay);
+        input.focus();
+        if (!savedEmail) input.select();
     }
 
 /************************************************************
@@ -1174,11 +1325,17 @@
     async function findViaUnpaywall(doi) {
         if (!doi) return null;
 
+        const unpaywallEmail = await getSavedUnpaywallEmail();
+
+        if (!unpaywallEmail) {
+            return null;
+        }
+
         const apiUrl =
             "https://api.unpaywall.org/v2/" +
             encodeURIComponent(doi) +
             "?email=" +
-            encodeURIComponent(UNPAYWALL_EMAIL);
+            encodeURIComponent(unpaywallEmail);
 
         const data = await requestJSON(apiUrl);
 
@@ -1311,7 +1468,7 @@
     async function findOpenAccessPDF(meta, statusEl) {
         const attempts = [];
 
-        if (meta.doi) {
+        if (meta.doi && await getSavedUnpaywallEmail()) {
             attempts.push({
                 name: "Unpaywall",
                 run: () => findViaUnpaywall(meta.doi)
@@ -1539,6 +1696,10 @@
                 openCustomSearch(meta, statusEl);
                 return;
 
+            case "unpaywallemail":
+                showUnpaywallEmailDialog(statusEl);
+                return;
+
             default:
                 setStatus(statusEl, "Unknown search option.", "bad");
                 return;
@@ -1592,10 +1753,11 @@
         menuEl.className = `${SCRIPT_TAG}-menu`;
 
         menuEl.style.cssText += `
-            min-width: 145px;
-            width: 155px;
+            min-width: 190px;
+            width: 190px;
             position: absolute;
             padding: 5px;
+            box-sizing: border-box;
         `;
 
         const allOptions = [
@@ -1612,6 +1774,39 @@
             menuEl.innerHTML = "";
 
             const hiddenOptions = getHiddenOptions();
+
+            const emailBtn = document.createElement("button");
+            emailBtn.type = "button";
+            emailBtn.textContent = "+";
+            emailBtn.title = "Add or change optional Unpaywall email";
+            emailBtn.style.cssText = `
+                position: absolute;
+                top: 4px;
+                right: 26px;
+                width: 18px;
+                height: 18px;
+                min-width: 18px;
+                padding: 0;
+                margin: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 13px;
+                font-weight: 700;
+                line-height: 1;
+                color: #111827;
+                background: #ffffff;
+                border: 1px solid #cbd5e1;
+                border-radius: 5px;
+                cursor: pointer;
+                z-index: 5;
+            `;
+
+            emailBtn.addEventListener("click", event => {
+                event.stopPropagation();
+                showUnpaywallEmailDialog(statusEl);
+                menuEl.classList.remove("open");
+            });
 
             const resetBtn = document.createElement("button");
             resetBtn.type = "button";
@@ -1646,6 +1841,7 @@
                 notifyAllMenusToUpdate();
             });
 
+            menuEl.appendChild(emailBtn);
             menuEl.appendChild(resetBtn);
 
             const visibleOptions = allOptions.filter(option => {
@@ -1654,9 +1850,9 @@
 
             if (visibleOptions.length === 0) {
                 const emptyMsg = document.createElement("div");
-                emptyMsg.textContent = "All hidden. Click ↻.";
+                emptyMsg.textContent = "All hidden. Click ↻ to reset.";
                 emptyMsg.style.cssText = `
-                    padding: 7px 24px 7px 7px;
+                    padding: 7px 52px 7px 7px;
                     font-size: 12px;
                     color: #64748b;
                     font-family: Arial, sans-serif;
@@ -1675,7 +1871,7 @@
                     gap: 6px;
                     width: 100%;
                     text-align: left;
-                    padding: 7px ${index === 0 ? "24px" : "7px"} 7px 5px;
+                    padding: 7px ${index === 0 ? "52px" : "7px"} 7px 5px;
                     white-space: nowrap;
                     overflow: hidden;
                 `;
