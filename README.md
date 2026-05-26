@@ -26,14 +26,12 @@ Covidence PDF Finder is designed to help researchers find PDF files for studies 
 2. Click `Download ZIP`.
 3. Unzip the downloaded ZIP file.
 4. Only keep the `CovidencePDFinder` folder.
-5. Open the `content.js` file.
-6. Replace `YOUR_EMAIL@example.com` with your real email address. This is needed because Unpaywall asks API users to include a real email address.
-7. Open Google Chrome.
-8. Go to `chrome://extensions/`.
-9. Turn on `Developer mode` in the top-right corner.
-10. Click `Load unpacked`.
-11. Select the `CovidencePDFinder` folder.
-12. The extension should now be installed and ready to use.
+5. Open Google Chrome.
+6. Go to `chrome://extensions/`.
+7. Turn on `Developer mode` in the top-right corner.
+8. Click `Load unpacked`.
+9. Select the `CovidencePDFinder` folder.
+10. The extension should now be installed and ready to use.
 
 ## How to Use the Chrome Extension
 
