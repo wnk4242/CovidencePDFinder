@@ -39,8 +39,6 @@ Install the extension directly from the Chrome Web Store:
 
 ### Option 2: Manual installation from GitHub (earlier update than Chrome Web Store)
 
-## Download
-
 1. Go to [the latest release](https://github.com/wnk4242/CovidencePDFinder/releases/latest), and download `CovidencePDFinder.zip`.
 2. Unzip the downloaded ZIP file.
 4. Open Google Chrome.
