@@ -22,16 +22,19 @@ Covidence PDF Finder is designed to help researchers find PDF files for studies 
 
 # Chrome Extension Installation
 
-1. Click the green `<> Code` button on this GitHub page.
-2. Click `Download ZIP`.
-3. Unzip the downloaded ZIP file.
-4. Only keep the `CovidencePDFinder` folder.
-5. Open Google Chrome.
-6. Go to `chrome://extensions/`.
-7. Turn on `Developer mode` in the top-right corner.
-8. Click `Load unpacked`.
-9. Select the `CovidencePDFinder` folder.
-10. The extension should now be installed and ready to use.
+## Download
+
+To install the extension manually, download the latest release:
+
+1. [Download Covidence PDF Finder](https://github.com/wnk4242/CovidencePDFinder/releases/latest)
+2. Unzip the downloaded ZIP file.
+3. Only keep the `CovidencePDFinder` folder.
+4. Open Google Chrome.
+5. Go to `chrome://extensions/`.
+6. Turn on `Developer mode` in the top-right corner.
+7. Click `Load unpacked`.
+8. Select the `CovidencePDFinder` folder.
+9. The extension should now be installed and ready to use.
 
 ## How to Use the Chrome Extension
 
