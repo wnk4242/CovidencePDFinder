@@ -39,9 +39,7 @@ Covidence PDF Finder is designed to help researchers find PDF files for studies 
 4. Open Google Chrome.
 5. Go to `chrome://extensions/`.
 6. Turn on `Developer mode` in the top-right corner.
-7. Click `Load unpacked`.
-8. Select the `CovidencePDFinder` folder.
-9. The extension should now be installed and ready to use.
+7. Click `Load unpacked` and select the `CovidencePDFinder` folder.
 
 ## How to Use the Chrome Extension
 
