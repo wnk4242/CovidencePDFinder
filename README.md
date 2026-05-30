@@ -1,5 +1,15 @@
 # Covidence PDF Finder
 
+<!-- badges: start -->
+
+![GitHub all releases](https://img.shields.io/github/downloads/wnk4242/CovidencePDFinder/total)
+![GitHub release date](https://img.shields.io/github/release-date/wnk4242/CovidencePDFinder)
+![GitHub package version](https://img.shields.io/github/v/release/wnk4242/CovidencePDFinder)
+![GitHub last commit](https://img.shields.io/github/last-commit/wnk4242/CovidencePDFinder)
+![GitHub Repo stars](https://img.shields.io/github/stars/wnk4242/CovidencePDFinder?style=social)
+
+<!-- badges: end -->
+
 Covidence PDF Finder is designed to help researchers find PDF files for studies during the full-text review stage in Covidence. This tool is especially useful for systematic reviews, scoping reviews, meta-analyses, and other evidence synthesis projects where reviewers need to locate and upload full-text PDFs for many papers.
 
 <p align="left">
