@@ -34,7 +34,7 @@ Covidence PDF Finder is designed to help researchers find PDF files for studies 
 
 ## Download
 
-1. Download [the latest release](https://github.com/wnk4242/CovidencePDFinder/releases/latest)
+1. Go to [the latest release](https://github.com/wnk4242/CovidencePDFinder/releases/latest), and download `CovidencePDFinder.zip`.
 2. Unzip the downloaded ZIP file.
 3. Only keep the `CovidencePDFinder` folder.
 4. Open Google Chrome.
