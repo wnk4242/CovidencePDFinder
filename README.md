@@ -29,8 +29,15 @@ Covidence PDF Finder is designed to help researchers find PDF files for studies 
 - Includes a custom database search option allowing researchers search for PDFs using their institutional library resources (EBSCO, Ovid, PsycInfo, JSTOR, Web of Science, ScienceDirect, etc)
 
 ---
+## Download
 
-# Chrome Extension Installation
+### Option 1: Chrome Web Store
+
+Install the extension directly from the Chrome Web Store:
+
+[https://chromewebstore.google.com/detail/jigkollgbnebgapihicejingpjhabbkg](https://chromewebstore.google.com/detail/jigkollgbnebgapihicejingpjhabbkg)
+
+### Option 2: Manual installation from GitHub (earlier update than Chrome Web Store)
 
 ## Download
 
